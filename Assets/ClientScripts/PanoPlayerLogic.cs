@@ -87,7 +87,7 @@ public class PanoPlayerLogic : MonoBehaviour
     void OnNext()
     {
         m_CurrentIndex++;
-        if(m_CurrentIndex > m_FileNames.Length)
+        if(m_CurrentIndex >= m_FileNames.Length)
         {
             m_CurrentIndex = 0;
 
