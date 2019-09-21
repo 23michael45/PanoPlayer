@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/AndroidNative.unity
     guid: fe72e2383660c074c849a838e5a3d8c5
+  - enabled: 0
+    path: Assets/SvrVideo/Scenes/SkyworthVRVideoDemo.unity
+    guid: 1e5e92097d3f2814caa12cbde76d5871
   m_configObjects: {}

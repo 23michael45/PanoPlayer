@@ -1,14 +1,18 @@
-﻿using RenderHeads.Media.AVProVideo;
+﻿#if AVPRO
+using RenderHeads.Media.AVProVideo;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class PanoPlayerLogic : MonoBehaviour
 {
-    public static PanoPlayerLogic mInstance;
+    public static PanoPlayerLogic mInstance;  
+    public SvrVideoPlayerController m_MediaPlayer;
+    public GameObject m_BackgroundScene;
 
-    public MediaPlayer m_MediaPlayer;
     public Canvas m_UICanvas;
 
 
@@ -17,44 +21,49 @@ public class PanoPlayerLogic : MonoBehaviour
 
     public Button m_NextBtn;
     public Button m_PreBtn;
+    public Button m_StopBtn;
+    public Button m_PlayBtn;
+    public Button m_PauseBtn;
+    public Button m_StartStreamBtn;
+    public Button m_QuitBtn;
+    public VirtualTextInputBox m_StreamUrl;
+    public Text m_FileNameLabel;
+
 
     string[] m_FileNames;
     int m_CurrentIndex = 0;
 
     void PlayIndex(int index)
     {
-        m_MediaPlayer.Stop();
-        m_MediaPlayer.OpenVideoFromFile(MediaPlayer.FileLocation.AbsolutePathOrURL, m_FileNames[index], true);
-        m_MediaPlayer.Play();
+        string file = m_FileNames[index];
+        m_FileNameLabel.text = file.Substring(file.LastIndexOf('/') + 1);
+
+        m_MediaPlayer.PlayVideoByUrl(file);
+
     }
 
     public void Start()
     {
-
-        m_MediaPlayer.m_VideoLocation = MediaPlayer.FileLocation.AbsolutePathOrURL;
         m_NextBtn.onClick.AddListener(OnNext);
         m_PreBtn.onClick.AddListener(OnPre);
+        m_StopBtn.onClick.AddListener(OnStop);
+        m_PlayBtn.onClick.AddListener(OnPlay);
+        m_PauseBtn.onClick.AddListener(OnPause);
+        m_StartStreamBtn.onClick.AddListener(OnStartStream);
+        m_QuitBtn.onClick.AddListener(OnQuit);
         mInstance = this;
 #if UNITY_ANDROID && !UNITY_EDITOR
         m_FileNames = AndroidNative.GetFilesInPath(AndroidNative.GetDCIMPath());
-
-        m_MediaPlayer.m_VideoLocation = MediaPlayer.FileLocation.AbsolutePathOrURL;
         
-        FillItems(m_FileNames);
 #else
-
-        m_FileNames = new string[5];
-        for (int i = 0; i < 5; i++)
+        int len = 5;
+        m_FileNames = new string[len];
+        for (int i = 0; i < len; i++)
         {
             m_FileNames[i] = "D:/DevelopProj/Pano/PiProject/PanoPlayer/PanoPlayer/Assets/2D/Pano8K.mp4";
         }
-        //fileNames[0] = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
-        FillItems(m_FileNames);
-
-        m_MediaPlayer.m_VideoPath = m_FileNames[0];
-
 #endif
-
+        FillItems(m_FileNames);
         PlayIndex(m_CurrentIndex);
     }
     public void FillItems(string[] fileNames)
@@ -69,25 +78,29 @@ public class PanoPlayerLogic : MonoBehaviour
             gonew.GetComponent<ItemLogic>().SetInfo(fileName);
         }
     }
-
-    public void OnSelectBtn()
-    {
-
-    }
-
+    
     public void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
             Debug.Log("Click Big Button");
-            bool b = m_UICanvas.gameObject.activeInHierarchy;
-            //m_UICanvas.gameObject.SetActive(!b);
+
+            if(!IsPointerOverUIElement())
+            {
+                bool b = m_UICanvas.gameObject.activeInHierarchy;
+                m_UICanvas.gameObject.SetActive(!b);
+
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
         }
     }
     void OnNext()
     {
         m_CurrentIndex++;
-        if(m_CurrentIndex >= m_FileNames.Length)
+        if (m_CurrentIndex >= m_FileNames.Length)
         {
             m_CurrentIndex = 0;
 
@@ -105,4 +118,88 @@ public class PanoPlayerLogic : MonoBehaviour
         PlayIndex(m_CurrentIndex);
 
     }
+    void OnPlay()
+    {
+#if UMP
+        m_MediaPlayer.Play();
+#endif
+    }
+    void OnPause()
+    {
+#if UMP
+        if (m_MediaPlayer.IsPlaying)
+        {
+
+            m_MediaPlayer.Pause();
+        }
+        else
+        {
+
+            m_MediaPlayer.Play();
+        }
+#endif
+    }
+    void OnStop()
+    {
+#if UMP
+        m_MediaPlayer.Stop();
+#endif
+    }
+    void OnStartStream()
+    {
+        m_StreamUrl.HideKeyboard();
+        string url = m_StreamUrl.gameObject.GetComponent<InputField>().text;
+    
+        m_FileNameLabel.text = url;
+        m_MediaPlayer.PlayVideoByUrl(url);
+    }
+    private void OnQuit()
+    {
+        Application.Quit();
+    }
+
+    public void SetPlayState(bool bPlaying)
+    {
+        m_BackgroundScene.SetActive(!bPlaying);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ///////////////////////////////////////////////////////////////////
+    /// ///Returns 'true' if we touched or hovering on Unity UI element.
+    public static bool IsPointerOverUIElement()
+    {
+        return IsPointerOverUIElement(GetEventSystemRaycastResults());
+    }
+    ///Returns 'true' if we touched or hovering on Unity UI element.
+    public static bool IsPointerOverUIElement(List<RaycastResult> eventSystemRaysastResults)
+    {
+        for (int index = 0; index < eventSystemRaysastResults.Count; index++)
+        {
+            RaycastResult curRaysastResult = eventSystemRaysastResults[index];
+            if (curRaysastResult.gameObject.layer == LayerMask.NameToLayer("UI"))
+                return true;
+        }
+        return false;
+    }
+    ///Gets all event systen raycast results of current mouse or touch position.
+    static List<RaycastResult> GetEventSystemRaycastResults()
+    {
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+        List<RaycastResult> raysastResults = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, raysastResults);
+        return raysastResults;
+    }
 }
+
