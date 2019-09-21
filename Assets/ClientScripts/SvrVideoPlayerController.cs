@@ -41,6 +41,25 @@ public class SvrVideoPlayerController : MonoBehaviour
         
     }
 
+    public void Play()
+    {
+        SvrVideoPlayer.Play();
+    }
+
+    public void Stop()
+    {
+        SvrVideoPlayer.Stop();
+        SvrVideoPlayer.Release();
+    }
+    public void Pause()
+    {
+        SvrVideoPlayer.Pause();
+    }
+    public bool IsPlaying()
+    {
+        return SvrVideoPlayer.GetPlayerState() == VideoPlayerState.Play;
+    }
+
     private void OnEnd()
     {
         SvrVideoPlayer.Release();
@@ -51,6 +70,8 @@ public class SvrVideoPlayerController : MonoBehaviour
     {
         PlayerLogic.SetPlayState(true);
         long totalTime = SvrVideoPlayer.GetVideoDuration();
+
+
     }
 
     private void OnVolumeChange(float volumePercent)

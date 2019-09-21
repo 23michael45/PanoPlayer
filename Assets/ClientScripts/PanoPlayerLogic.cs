@@ -11,7 +11,6 @@ public class PanoPlayerLogic : MonoBehaviour
 {
     public static PanoPlayerLogic mInstance;  
     public SvrVideoPlayerController m_MediaPlayer;
-    public GameObject m_BackgroundScene;
 
     public Canvas m_UICanvas;
 
@@ -27,19 +26,21 @@ public class PanoPlayerLogic : MonoBehaviour
     public Button m_StartStreamBtn;
     public Button m_QuitBtn;
     public VirtualTextInputBox m_StreamUrl;
-    public Text m_FileNameLabel;
-
+    public Text m_MsgLabel;
+    
 
     string[] m_FileNames;
     int m_CurrentIndex = 0;
 
+    bool m_IsStreaming = false;
+
     void PlayIndex(int index)
     {
+        m_IsStreaming = false;
         string file = m_FileNames[index];
-        m_FileNameLabel.text = file.Substring(file.LastIndexOf('/') + 1);
 
         m_MediaPlayer.PlayVideoByUrl(file);
-
+        SetMsg("Loading");
     }
 
     public void Start()
@@ -52,8 +53,22 @@ public class PanoPlayerLogic : MonoBehaviour
         m_StartStreamBtn.onClick.AddListener(OnStartStream);
         m_QuitBtn.onClick.AddListener(OnQuit);
         mInstance = this;
+
+
+
+        string streamUrl = PlayerPrefs.GetString("StreamUrl","");
+        if(streamUrl == "")
+        {
+            //m_StreamUrl.gameObject.GetComponent<InputField>().text = "rtmp://183.56.199.137/live/8k";
+            m_StreamUrl.gameObject.GetComponent<InputField>().text = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
+        }
+        else
+        {
+            m_StreamUrl.gameObject.GetComponent<InputField>().text = streamUrl;
+        }
 #if UNITY_ANDROID && !UNITY_EDITOR
         m_FileNames = AndroidNative.GetFilesInPath(AndroidNative.GetDCIMPath());
+ 
         
 #else
         int len = 5;
@@ -64,7 +79,7 @@ public class PanoPlayerLogic : MonoBehaviour
         }
 #endif
         FillItems(m_FileNames);
-        PlayIndex(m_CurrentIndex);
+        SetPlayState(false);
     }
     public void FillItems(string[] fileNames)
     {
@@ -81,17 +96,19 @@ public class PanoPlayerLogic : MonoBehaviour
     
     public void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        bool trigger = false;
+        if(GvrControllerInput.ClickButtonDown)
         {
-            Debug.Log("Click Big Button");
-
             if(!IsPointerOverUIElement())
             {
                 bool b = m_UICanvas.gameObject.activeInHierarchy;
                 m_UICanvas.gameObject.SetActive(!b);
 
             }
+            
         }
+
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();
@@ -120,14 +137,13 @@ public class PanoPlayerLogic : MonoBehaviour
     }
     void OnPlay()
     {
-#if UMP
-        m_MediaPlayer.Play();
-#endif
+
+        PlayIndex(m_CurrentIndex);
+        SetPlayState(true);
     }
     void OnPause()
     {
-#if UMP
-        if (m_MediaPlayer.IsPlaying)
+        if (m_MediaPlayer.IsPlaying())
         {
 
             m_MediaPlayer.Pause();
@@ -137,21 +153,24 @@ public class PanoPlayerLogic : MonoBehaviour
 
             m_MediaPlayer.Play();
         }
-#endif
     }
     void OnStop()
     {
-#if UMP
+        Debug.Log("OnLogic Stop");
         m_MediaPlayer.Stop();
-#endif
+        SetPlayState(false);
     }
     void OnStartStream()
     {
         m_StreamUrl.HideKeyboard();
         string url = m_StreamUrl.gameObject.GetComponent<InputField>().text;
-    
-        m_FileNameLabel.text = url;
+        SetMsg("Loading");
         m_MediaPlayer.PlayVideoByUrl(url);
+
+        m_IsStreaming = true;
+
+        PlayerPrefs.SetString("StreamUrl", url);
+        PlayerPrefs.Save();
     }
     private void OnQuit()
     {
@@ -160,10 +179,40 @@ public class PanoPlayerLogic : MonoBehaviour
 
     public void SetPlayState(bool bPlaying)
     {
-        m_BackgroundScene.SetActive(!bPlaying);
+        Debug.Log("SetPlayState Is Playing : " + bPlaying);
+        //m_MediaPlayer.gameObject.SetActive(bPlaying);
+        m_MediaPlayer.gameObject.GetComponent<Renderer>().enabled = bPlaying;
+
+        if(bPlaying)
+        {
+            SetCurrentFileNameMsg();
+        }
+        else
+        {
+            SetMsg("");
+        }
     }
 
+    void SetCurrentFileNameMsg()
+    {
+        string file;
+        if (m_IsStreaming)
+        {
+            file = m_StreamUrl.gameObject.GetComponent<InputField>().text;
+        }
+        else
+        {
 
+            file = m_FileNames[m_CurrentIndex];
+        }
+        string msg = file.Substring(file.LastIndexOf('/') + 1);
+        SetMsg(msg);
+    }
+
+    void SetMsg(string msg)
+    {
+        m_MsgLabel.text = msg;
+    }
 
 
 
