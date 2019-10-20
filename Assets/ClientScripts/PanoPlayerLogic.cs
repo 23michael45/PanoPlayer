@@ -59,8 +59,8 @@ public class PanoPlayerLogic : MonoBehaviour
         string streamUrl = PlayerPrefs.GetString("StreamUrl","");
         if(streamUrl == "")
         {
-            //m_StreamUrl.gameObject.GetComponent<InputField>().text = "rtmp://183.56.199.137/live/8k";
-            m_StreamUrl.gameObject.GetComponent<InputField>().text = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
+            m_StreamUrl.gameObject.GetComponent<InputField>().text = "rtmp://183.56.199.137/live/8k";
+            //m_StreamUrl.gameObject.GetComponent<InputField>().text = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
         }
         else
         {
@@ -80,6 +80,10 @@ public class PanoPlayerLogic : MonoBehaviour
 #endif
         FillItems(m_FileNames);
         SetPlayState(false);
+
+
+        //test on phone
+        OnStartStream();
     }
     public void FillItems(string[] fileNames)
     {
