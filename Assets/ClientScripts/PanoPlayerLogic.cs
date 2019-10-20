@@ -14,6 +14,9 @@ public class PanoPlayerLogic : MonoBehaviour
 
     public Canvas m_UICanvas;
 
+    public GameObject m_ControlBar;
+    public GameObject m_SensorData;
+
 
     public Transform m_Content;
     public GameObject m_ItemPrefab;
@@ -53,7 +56,7 @@ public class PanoPlayerLogic : MonoBehaviour
         m_StartStreamBtn.onClick.AddListener(OnStartStream);
         m_QuitBtn.onClick.AddListener(OnQuit);
         mInstance = this;
-
+        m_SensorData.SetActive(false);
 
 
         string streamUrl = PlayerPrefs.GetString("StreamUrl","");
@@ -105,8 +108,10 @@ public class PanoPlayerLogic : MonoBehaviour
         {
             if(!IsPointerOverUIElement())
             {
-                bool b = m_UICanvas.gameObject.activeInHierarchy;
-                m_UICanvas.gameObject.SetActive(!b);
+                bool b = m_ControlBar.activeInHierarchy;
+                m_ControlBar.SetActive(!b);
+
+                m_SensorData.SetActive(b);
 
             }
             
