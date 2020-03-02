@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/SvrVideo/Scenes/SkyworthVRVideoDemo.unity
     guid: 1e5e92097d3f2814caa12cbde76d5871
+  - enabled: 0
+    path: Assets/Scenes/ModelWithPano.unity
+    guid: efbfaa82fc663164798d32a18f9b425f
   m_configObjects: {}

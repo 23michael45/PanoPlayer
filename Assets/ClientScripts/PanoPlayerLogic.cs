@@ -13,6 +13,7 @@ public class PanoPlayerLogic : MonoBehaviour
     public SvrVideoPlayerController m_MediaPlayer;
 
     public Canvas m_UICanvas;
+    public Camera m_MainCamera;
 
     public GameObject m_ControlBar;
     public GameObject m_SensorData;
@@ -21,16 +22,19 @@ public class PanoPlayerLogic : MonoBehaviour
     public Transform m_Content;
     public GameObject m_ItemPrefab;
 
+    public GameObject mFilePlayButtonContainer;
     public Button m_NextBtn;
     public Button m_PreBtn;
     public Button m_StopBtn;
     public Button m_PlayBtn;
     public Button m_PauseBtn;
     public Button m_StartStreamBtn;
+    public Button m_StopStreamBtn;
     public Button m_QuitBtn;
     public VirtualTextInputBox m_StreamUrl;
     public Text m_MsgLabel;
-    
+
+    public GameObject m_Pointer;
 
     string[] m_FileNames;
     int m_CurrentIndex = 0;
@@ -45,7 +49,6 @@ public class PanoPlayerLogic : MonoBehaviour
         m_MediaPlayer.PlayVideoByUrl(file);
         SetMsg("Loading");
     }
-
     public void Start()
     {
         m_NextBtn.onClick.AddListener(OnNext);
@@ -54,15 +57,16 @@ public class PanoPlayerLogic : MonoBehaviour
         m_PlayBtn.onClick.AddListener(OnPlay);
         m_PauseBtn.onClick.AddListener(OnPause);
         m_StartStreamBtn.onClick.AddListener(OnStartStream);
+        m_StopStreamBtn.onClick.AddListener(OnStopStream);
         m_QuitBtn.onClick.AddListener(OnQuit);
         mInstance = this;
         m_SensorData.SetActive(false);
-
+        m_StopStreamBtn.gameObject.SetActive(false);
 
         string streamUrl = PlayerPrefs.GetString("StreamUrl","");
         if(streamUrl == "")
         {
-            m_StreamUrl.gameObject.GetComponent<InputField>().text = "rtmp://183.56.199.137/live/8k";
+            m_StreamUrl.gameObject.GetComponent<InputField>().text = "rtmp://39.108.230.83/live/001";
             //m_StreamUrl.gameObject.GetComponent<InputField>().text = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
         }
         else
@@ -86,7 +90,7 @@ public class PanoPlayerLogic : MonoBehaviour
 
 
         //test on phone
-        OnStartStream();
+        //OnStartStream();
     }
     public void FillItems(string[] fileNames)
     {
@@ -112,13 +116,53 @@ public class PanoPlayerLogic : MonoBehaviour
                 m_ControlBar.SetActive(!b);
 
                 m_SensorData.SetActive(b);
+                if (b == false)
+                {
+                    float dist = Vector3.Distance(m_MainCamera.transform.position, m_ControlBar.transform.position);
+                    Vector3 dir = m_MainCamera.transform.forward;
+                    dir.y = 0;
+                    dir = dir.normalized;
 
+                    m_ControlBar.transform.position = m_MainCamera.transform.position + dir * dist;
+                    m_ControlBar.transform.LookAt(m_MainCamera.transform.position);
+
+                }
+
+                m_Pointer.SetActive(!b);
             }
             
         }
 
+#if UNITY_EDITOR
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (!IsPointerOverUIElement())
+            {
+                bool b = m_ControlBar.activeInHierarchy;
+                m_ControlBar.SetActive(!b);
+                if(b == false)
+                {
+                    float dist = Vector3.Distance(m_MainCamera.transform.position, m_ControlBar.transform.position);
+                    Vector3 dir = m_MainCamera.transform.forward;
+                    dir.y = 0;
+                    dir = dir.normalized;
+
+                    m_ControlBar.transform.position = m_MainCamera.transform.position + dir * dist;
+                    m_ControlBar.transform.LookAt(m_MainCamera.transform.position);
+
+                }
+
+
+                m_SensorData.SetActive(b);
+
+                m_Pointer.SetActive(!b);
+            }
+        }
+#endif
+
+
+            if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();
         }
@@ -180,6 +224,20 @@ public class PanoPlayerLogic : MonoBehaviour
 
         PlayerPrefs.SetString("StreamUrl", url);
         PlayerPrefs.Save();
+
+        m_StartStreamBtn.gameObject.SetActive(false);
+        m_StopStreamBtn.gameObject.SetActive(true);
+        mFilePlayButtonContainer.SetActive(false);
+        m_StreamUrl.enabled = false;
+    }
+    void OnStopStream()
+    {
+        m_MediaPlayer.Stop();
+
+        m_StartStreamBtn.gameObject.SetActive(true);
+        m_StopStreamBtn.gameObject.SetActive(false);
+        mFilePlayButtonContainer.SetActive(true);
+        m_StreamUrl.enabled = true;
     }
     private void OnQuit()
     {
