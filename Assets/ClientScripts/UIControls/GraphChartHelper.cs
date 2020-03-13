@@ -2,16 +2,29 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GraphChartHelper : MonoBehaviour
 {
     GraphChartBase mGraph;
     DataTableItem[] mDataItems;
-
+    Coroutine mCoroutine;
     public float mUpdateTime = 5;
+
+    public GameObject WarningGO;
+    public DataTableItem WarningItem;
+
+    DataTableItem mCurrentItem;
+    public Button mCloseBtn;
+
     // Start is called before the first frame update
     void Start()
     {
+        mCloseBtn.onClick.AddListener(OnCloseBtn);
+    }
+    private void OnDestroy()
+    {
+        mCloseBtn.onClick.RemoveListener(OnCloseBtn);
 
     }
 
@@ -19,8 +32,27 @@ public class GraphChartHelper : MonoBehaviour
     {
         mGraph = GetComponentInChildren<GraphChartBase>();
         mDataItems = GetComponentsInChildren<DataTableItem>(true);
-        StartCoroutine(LoopFillItems());
+        WarningGO.SetActive(false);
+        //mCoroutine = StartCoroutine(LoopFillItems());
 
+    }
+    private void OnDisable()
+    {
+        //StopCoroutine(mCoroutine);
+        //mCoroutine = null;
+    }
+
+    public void FillItem(DataTableItem item)
+    {
+        if(mCurrentItem == null)
+        {
+            FillOneItem(null, item);
+
+        }
+        else
+        {
+            FillOneItem(mCurrentItem, item);
+        }
     }
 
     void FillOneItem(DataTableItem preItem,DataTableItem curItem)
@@ -32,7 +64,7 @@ public class GraphChartHelper : MonoBehaviour
             {
                 mGraph.DataSource.RenameCategory("default", curItem.GetFullName());
             }
-            else if (mGraph.DataSource.HasCategory(preItem.GetFullName()))
+            else if (preItem != null && mGraph.DataSource.HasCategory(preItem.GetFullName()))
             {
 
                 mGraph.DataSource.RenameCategory(preItem.GetFullName(), curItem.GetFullName());
@@ -59,8 +91,11 @@ public class GraphChartHelper : MonoBehaviour
             vAxis.MainDivisions.Messure = ChartDivisionInfo.DivisionMessure.DataUnits;
             vAxis.MainDivisions.UnitsPerDivision = curItem.mDivisionUnit;
 
+            if(preItem != null)
+            {
+                mGraph.DataSource.ClearCategory(preItem.GetFullName());
 
-            mGraph.DataSource.ClearCategory(preItem.GetFullName());
+            }
             mGraph.DataSource.ClearCategory(curItem.GetFullName());
             for (int i = 0; i < curItem.mValues.Length; i++)
             {
@@ -68,7 +103,18 @@ public class GraphChartHelper : MonoBehaviour
             }
             
             mGraph.DataSource.EndBatch();
+
+            if(WarningItem == curItem)
+            {
+                WarningGO.SetActive(true);
+            }
+            else
+            {
+                WarningGO.SetActive(false);
+
+            }
         }
+        mCurrentItem = curItem;
     }
 
     IEnumerator LoopFillItems()
@@ -94,5 +140,12 @@ public class GraphChartHelper : MonoBehaviour
             }
         }
 
+    }
+
+
+    void OnCloseBtn()
+    {
+        GlobalDataTable.Instance.gameObject.SetActive(true);
+        gameObject.SetActive(false);
     }
 }

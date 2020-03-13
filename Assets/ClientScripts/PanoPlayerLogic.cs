@@ -124,11 +124,11 @@ public class PanoPlayerLogic : MonoBehaviour
                     dir = dir.normalized;
 
                     m_ControlBar.transform.position = m_MainCamera.transform.position + dir * dist;
-                    m_ControlBar.transform.LookAt(m_MainCamera.transform.position);
+                    m_ControlBar.transform.LookAt(m_ControlBar.transform.position + m_ControlBar.transform.position - m_MainCamera.transform.position);
 
                 }
 
-                m_Pointer.SetActive(!b);
+                //m_Pointer.SetActive(!b);
             }
             
         }
@@ -149,14 +149,14 @@ public class PanoPlayerLogic : MonoBehaviour
                     dir = dir.normalized;
 
                     m_ControlBar.transform.position = m_MainCamera.transform.position + dir * dist;
-                    m_ControlBar.transform.LookAt(m_MainCamera.transform.position);
+                    m_ControlBar.transform.LookAt(m_ControlBar.transform.position +  m_ControlBar.transform.position - m_MainCamera.transform.position);
 
                 }
 
 
                 m_SensorData.SetActive(b);
 
-                m_Pointer.SetActive(!b);
+                //m_Pointer.SetActive(!b);
             }
         }
 #endif
